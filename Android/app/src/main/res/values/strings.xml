@@ -1,0 +1,21 @@
+<resources>
+    <string name="app_name">Producto 2</string>
+    <string name="producto2">LoneDev - Producto 2</string>
+    <string name="lonedev">LoneDev</string>
+    <string name="title_home">Home</string>
+    <string name="title_dashboard">Dashboard</string>
+    <string name="title_notifications">Notifications</string>
+    <string name="reel1">Carrete 1</string>
+    <string name="reel2">Carrete 2</string>
+    <string name="reel3">Carrete 3</string>
+    <string name="girar">Girar</string>
+    <string name="background_image">Imagen</string>
+    <string name="coins">Monedas</string>
+    <string name="jugador">Jugador</string>
+    <string name="jugar">Jugar</string>
+    <string name="crear">Crear</string>
+    <string name="leaderboard">Clasificación</string>
+    <string name="history">Historial</string>
+    <string name="seleccion_jugador">Selección de jugador</string>
+    <string name="cambio_jugador">Cambiar de jugador</string>
+</resources>
