@@ -14,10 +14,8 @@ class MusicService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        mediaPlayer = MediaPlayer.create(this, R.raw.music3)
-        mediaPlayer?.isLooping = true
-        mediaPlayer?.start() // Iniciar la música automáticamente
-        isPlaying = true // Actualizar el estado
+        Log.d("MusicService", "Servicio creado")
+        startDefaultMusic() // Reproducir la música predeterminada al iniciar el servicio
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -26,7 +24,10 @@ class MusicService : Service() {
             "com.example.producto2.GET_MUSIC_STATE" -> sendMusicState()
             "com.example.producto2.CHANGE_MUSIC" -> {
                 val uri = intent.data
-                uri?.let { changeMusic(it.toString()) }
+                uri?.let {
+                    Log.d("MusicService", "Cambiando música a: $uri")
+                    changeMusic(it.toString())
+                } ?: Log.e("MusicService", "URI de música no válido")
             }
         }
         return START_STICKY
@@ -34,6 +35,7 @@ class MusicService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
+        Log.d("MusicService", "Servicio destruido")
         mediaPlayer?.stop()
         mediaPlayer?.release()
         mediaPlayer = null
@@ -43,32 +45,49 @@ class MusicService : Service() {
         return null
     }
 
-    // Alternar entre reproducción y pausa
-    private fun toggleMusic() {
-        if (isPlaying) {
-            mediaPlayer?.pause()
-            isPlaying = false
-        } else {
-            mediaPlayer?.start()
-            isPlaying = true
+    private fun startDefaultMusic() {
+        mediaPlayer = MediaPlayer.create(this, R.raw.music3)
+        mediaPlayer?.apply {
+            isLooping = true
+            start()
         }
-        sendMusicState() // Actualizar el estado de la música
+        isPlaying = true
+        sendMusicState()
     }
 
-    // Enviar el estado actual de la música
+    private fun toggleMusic() {
+        mediaPlayer?.let {
+            if (isPlaying) {
+                it.pause()
+                isPlaying = false
+            } else {
+                it.start()
+                isPlaying = true
+            }
+            sendMusicState()
+        } ?: Log.e("MusicService", "MediaPlayer no inicializado")
+    }
+
     private fun sendMusicState() {
         val intent = Intent("com.example.producto2.MUSIC_STATE")
         intent.putExtra("isPlaying", isPlaying)
-        sendBroadcast(intent) // Enviar un broadcast con el estado de la música
+        sendBroadcast(intent)
+        Log.d("MusicService", "Estado de la música enviado: $isPlaying")
     }
 
-    // Cambiar la música actual
     private fun changeMusic(uri: String) {
-        mediaPlayer?.reset()
-        mediaPlayer = MediaPlayer.create(this, Uri.parse(uri))
-        mediaPlayer?.isLooping = true
-        mediaPlayer?.start()
-        isPlaying = true
-        sendMusicState() // Actualizar el estado de la música
+        try {
+            mediaPlayer?.stop()
+            mediaPlayer?.reset()
+            mediaPlayer = MediaPlayer.create(this, Uri.parse(uri))
+            mediaPlayer?.apply {
+                isLooping = true
+                start()
+            }
+            isPlaying = true
+            sendMusicState()
+        } catch (e: Exception) {
+            Log.e("MusicService", "Error al cambiar la música: ${e.message}", e)
+        }
     }
 }
