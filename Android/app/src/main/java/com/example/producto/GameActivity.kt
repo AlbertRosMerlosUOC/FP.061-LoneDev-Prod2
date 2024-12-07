@@ -1,11 +1,16 @@
 package com.example.producto2
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
+import android.media.AudioManager
+import android.media.MediaPlayer
 import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.animation.AnimationUtils
+import android.widget.ImageView
 import androidx.annotation.RequiresApi
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
@@ -23,10 +28,11 @@ class GameActivity : AppCompatActivity() {
 
     private lateinit var binding: ActivityGameBinding
     private lateinit var database: AppDatabase
+    private lateinit var mediaPlayer: MediaPlayer
+    private lateinit var audioManager: AudioManager
     private var jugadorActual: Player? = null
     private val symbols = listOf(
         R.drawable.ic_reels_0,
-        //R.drawable.ic_reels_1,
         R.drawable.ic_reels_2,
         R.drawable.ic_reels_3,
         R.drawable.ic_reels_4,
@@ -35,7 +41,6 @@ class GameActivity : AppCompatActivity() {
     )
     private val symbolNames = listOf(
         "s0",
-        //"s1",
         "s2",
         "s3",
         "s4",
@@ -49,6 +54,9 @@ class GameActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         database = AppDatabase.getInstance(this)
+
+        audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        mediaPlayer = MediaPlayer.create(this, R.raw.spin) // Añadir el archivo de sonido
 
         val jugadorId = intent.getIntExtra("jugadorId", -1)
 
@@ -91,6 +99,12 @@ class GameActivity : AppCompatActivity() {
         val handler = Handler(Looper.getMainLooper())
         val startTime = System.currentTimeMillis()
 
+        if (!mediaPlayer.isPlaying) {
+            mediaPlayer.start()
+        }
+
+        adjustSpinnerSoundVolume()
+
         handler.post(object : Runnable {
             override fun run() {
                 val elapsedTime = System.currentTimeMillis() - startTime
@@ -98,24 +112,34 @@ class GameActivity : AppCompatActivity() {
                 val symbol2 = symbols[Random.nextInt(symbols.size)]
                 val symbol3 = symbols[Random.nextInt(symbols.size)]
 
-                binding.reel1.setImageResource(symbol1)
-                binding.reel2.setImageResource(symbol2)
-                binding.reel3.setImageResource(symbol3)
+                // Aplicamos una animación de deslizamiento a las imágenes de las fichas
+                animateReel(binding.reel1, symbol1)
+                animateReel(binding.reel2, symbol2)
+                animateReel(binding.reel3, symbol3)
 
                 if (elapsedTime < spinDuration) {
                     handler.postDelayed(this, delay)
                 } else {
+                    mediaPlayer.stop()
+                    mediaPlayer.prepare()
                     val gameResult = checkResult(symbol1, symbol2, symbol3)
                     lifecycleScope.launch {
                         withContext(Dispatchers.IO) {
-                            if (gameResult != null) {
-                                database.gameResultDao().insertGame(gameResult)
+                            gameResult?.let {
+                                AppDatabase.getInstance(this@GameActivity).gameResultDao().insertGame(it)
                             }
                         }
                     }
                 }
             }
         })
+    }
+
+    private fun adjustSpinnerSoundVolume() {
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val volume = (maxVolume * 0.8).toInt()
+
+        mediaPlayer.setVolume(volume.toFloat() / maxVolume, volume.toFloat() / maxVolume)
     }
 
     private fun checkResult(symbol1: Int, symbol2: Int, symbol3: Int) : GameResult? {
@@ -221,5 +245,12 @@ class GameActivity : AppCompatActivity() {
             .create()
 
         dialog.show()
+    }
+
+    private fun animateReel(reelView: ImageView, symbolResId: Int) {
+        val slideAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate_animation)
+        reelView.startAnimation(slideAnimation)
+
+        reelView.setImageResource(symbolResId)
     }
 }
