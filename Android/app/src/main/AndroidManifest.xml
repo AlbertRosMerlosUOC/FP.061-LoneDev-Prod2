@@ -1,6 +1,8 @@
-<?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />  <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Producto 2 -->
 
     <application
         android:allowBackup="true"
@@ -24,6 +26,19 @@
         <activity android:name=".GameActivity" />
         <activity android:name=".LeaderboardActivity" />
         <activity android:name=".HistoryActivity" />
+
+        <service android:name=".MusicService"
+            android:enabled="true"
+            android:exported="false" />
+
+        <receiver
+            android:name=".MusicReceiver"
+            android:enabled="true"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.example.producto2.MUSIC_STATE" />
+            </intent-filter>
+        </receiver>
 
         <meta-data
             android:name="preloaded_fonts"
