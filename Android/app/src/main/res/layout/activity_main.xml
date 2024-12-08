@@ -18,8 +18,7 @@
         android:orientation="horizontal"
         android:gravity="end"
         android:layout_marginTop="16dp"
-        android:layout_marginRight="16dp">
-
+        android:layout_marginEnd="16dp">
 
         <ImageButton
             android:id="@+id/buttonToggleMusic"
@@ -35,6 +34,7 @@
             android:src="@drawable/ic_music_directory"
             android:background="?android:attr/selectableItemBackground"
             android:layout_marginStart="16dp" />
+
     </LinearLayout>
 
     <LinearLayout
@@ -55,6 +55,7 @@
             android:text="@string/lonedev"
             android:textColor="#8A2BE2"
             android:textSize="48sp"/>
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -96,6 +97,7 @@
                 android:layout_marginTop="2sp"
                 android:background="@drawable/spinner_background"
                 android:fontFamily="@font/exo_2_medium" />
+
         </LinearLayout>
 
         <LinearLayout

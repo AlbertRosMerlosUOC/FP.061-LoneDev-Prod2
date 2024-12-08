@@ -15,6 +15,31 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp">
+
+        <ImageButton
+            android:id="@+id/buttonToggleMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@drawable/ic_music_pause" />
+
+        <ImageButton
+            android:id="@+id/buttonSelectMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_music_directory"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginStart="16dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="16dp"
         android:gravity="center">
@@ -29,7 +54,8 @@
             android:shadowRadius="10"
             android:text="@string/lonedev"
             android:textColor="#8A2BE2"
-            android:textSize="48sp"/>
+            android:textSize="48sp"
+            android:layout_marginTop="15dp"/>
 
         <TextView
             android:layout_width="wrap_content"
@@ -62,7 +88,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recyclerView"
             android:layout_width="350dp"
-            android:layout_height="375dp"
+            android:layout_height="360dp"
             android:scrollbars="vertical" />
 
         <LinearLayout

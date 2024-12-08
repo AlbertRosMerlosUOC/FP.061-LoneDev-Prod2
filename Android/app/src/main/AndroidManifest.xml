@@ -1,9 +1,13 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />  <!-- Producto 2 -->
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Producto 2 -->
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" /> <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />     <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />    <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />          <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />            <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />             <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />        <!-- Producto 2 -->
+
 
     <application
         android:allowBackup="true"

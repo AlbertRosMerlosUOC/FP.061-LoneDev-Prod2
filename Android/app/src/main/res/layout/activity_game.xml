@@ -14,6 +14,31 @@
 
     <LinearLayout
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="16dp">
+
+        <ImageButton
+            android:id="@+id/buttonToggleMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?android:attr/selectableItemBackground"
+            android:src="@drawable/ic_music_pause" />
+
+        <ImageButton
+            android:id="@+id/buttonSelectMusic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/ic_music_directory"
+            android:background="?android:attr/selectableItemBackground"
+            android:layout_marginStart="16dp" />
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
         android:padding="16dp"
@@ -55,7 +80,7 @@
             android:shadowDx="0"
             android:shadowDy="1"
             android:shadowRadius="4"
-            android:text="Monedas: 100"
+            android:text="coinsTextView"
             android:textColor="#FFD700"
             android:textSize="24sp" />
 
@@ -111,7 +136,6 @@
             android:id="@+id/resultadoTextView"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
             android:fontFamily="@font/exo_2_bold"
             android:shadowColor="#000000"
             android:shadowDx="0"
@@ -120,6 +144,39 @@
             android:text="Gira para obtener recompensas"
             android:textColor="#FFD700"
             android:textSize="20sp" />
+
+        <LinearLayout
+            android:id="@+id/screenshotLinearLayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="18dp"
+            android:layout_marginBottom="36dp"
+            android:gravity="center"
+            android:orientation="horizontal"
+            android:visibility="invisible">
+
+            <TextView
+                android:id="@+id/screenshotTextView"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="6dp"
+                android:fontFamily="@font/exo_2_bold"
+                android:shadowColor="#000000"
+                android:shadowDx="0"
+                android:shadowDy="1"
+                android:shadowRadius="4"
+                android:text="¡Inmortaliza tu proeza!"
+                android:textColor="#FFD700"
+                android:textSize="20sp" />
+
+            <ImageButton
+                android:id="@+id/buttonScreenshot"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="?android:attr/selectableItemBackground"
+                android:src="@drawable/ic_screenshot" />
+
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

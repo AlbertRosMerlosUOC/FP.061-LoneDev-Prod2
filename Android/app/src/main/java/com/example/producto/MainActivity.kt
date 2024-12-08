@@ -5,7 +5,6 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.View
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
@@ -47,7 +46,6 @@ class MainActivity : AppCompatActivity() {
         val musicIntent = Intent(this, MusicService::class.java)
         startService(musicIntent)
 
-        // Configurar el botón de música
         binding.buttonToggleMusic.setOnClickListener {
             toggleMusic()
         }
@@ -56,7 +54,6 @@ class MainActivity : AppCompatActivity() {
             selectMusicLauncher.launch(arrayOf("audio/*"))
         }
 
-        // Registrar el BroadcastReceiver para recibir el estado de la música
         musicReceiver = MusicReceiver { isPlaying ->
             updateMusicButtonIcon(isPlaying)
         }
@@ -153,7 +150,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun toggleMusic() {
-        // Iniciar o detener la música desde el servicio
         val musicIntent = Intent(this, MusicService::class.java)
         musicIntent.action = "com.example.producto2.TOGGLE_MUSIC"
         startService(musicIntent)
@@ -169,7 +165,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun checkMusicState() {
-        // Enviar una intención para que el servicio nos diga si está reproduciendo
         val musicIntent = Intent(this, MusicService::class.java)
         musicIntent.action = "com.example.producto2.GET_MUSIC_STATE"
         startService(musicIntent)
@@ -185,7 +180,6 @@ class MainActivity : AppCompatActivity() {
 
     private val selectMusicLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
-            Log.d("MainActivity", "URI de música seleccionada: $uri")
             val musicIntent = Intent(this, MusicService::class.java).apply {
                 action = "com.example.producto2.CHANGE_MUSIC"
                 data = uri
