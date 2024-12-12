@@ -11,5 +11,6 @@ data class GameResult(
     val result1: String,
     val result2: String,
     val result3: String,
-    val date: String
+    val date: String,
+    val location: String?
 )

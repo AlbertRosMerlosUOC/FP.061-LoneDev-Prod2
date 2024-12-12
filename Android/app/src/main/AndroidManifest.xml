@@ -7,7 +7,8 @@
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />            <!-- Producto 2 -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />             <!-- Producto 2 -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />        <!-- Producto 2 -->
-
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />      <!-- Producto 2 -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />    <!-- Producto 2 -->
 
     <application
         android:allowBackup="true"
@@ -31,6 +32,7 @@
         <activity android:name=".GameActivity" />
         <activity android:name=".LeaderboardActivity" />
         <activity android:name=".HistoryActivity" />
+        <activity android:name=".HelpActivity" />
 
         <service android:name=".MusicService"
             android:enabled="true"

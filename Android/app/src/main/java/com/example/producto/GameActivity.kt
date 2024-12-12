@@ -35,6 +35,9 @@ import android.os.Build
 import android.widget.ImageButton
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.OnCompleteListener
 
 class GameActivity : AppCompatActivity() {
 
@@ -42,10 +45,12 @@ class GameActivity : AppCompatActivity() {
     private lateinit var database: AppDatabase
     private lateinit var mediaPlayer: MediaPlayer
     private lateinit var audioManager: AudioManager
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var musicReceiver: MusicReceiver? = null
     private var jugadorActual: Player? = null
     private val CALENDAR_PERMISSION_REQUEST_CODE = 101
     private val NOTIFICATIONS_PERMISSION_REQUEST_CODE = 102
+    private val LOCATION_PERMISSION_REQUEST_CODE = 103
     private val symbols = listOf(
         R.drawable.ic_reels_0,
         R.drawable.ic_reels_2,
@@ -71,10 +76,12 @@ class GameActivity : AppCompatActivity() {
 
         database = AppDatabase.getInstance(this)
 
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
+
         solicitarPermisosCalendario()
 
         audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        mediaPlayer = MediaPlayer.create(this, R.raw.spin) // Añadir el archivo de sonido
+        mediaPlayer = MediaPlayer.create(this, R.raw.spin)
 
         val jugadorId = intent.getIntExtra("jugadorId", -1)
 
@@ -140,8 +147,20 @@ class GameActivity : AppCompatActivity() {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (checkSelfPermission(android.Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), 102)
+                requestPermissions(arrayOf(android.Manifest.permission.POST_NOTIFICATIONS), NOTIFICATIONS_PERMISSION_REQUEST_CODE)
             }
+
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+            }
+
+            if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                requestPermissions(arrayOf(android.Manifest.permission.ACCESS_COARSE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+            }
+        }
+
+        binding.buttonHelp.setOnClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
         }
 
     }
@@ -175,10 +194,9 @@ class GameActivity : AppCompatActivity() {
                 } else {
                     mediaPlayer.stop()
                     mediaPlayer.prepare()
-                    val gameResult = checkResult(symbol1, symbol2, symbol3)
-                    lifecycleScope.launch {
-                        withContext(Dispatchers.IO) {
-                            gameResult?.let {
+                    checkResult(symbol1, symbol2, symbol3) { gameResult ->
+                        gameResult?.let {
+                            lifecycleScope.launch(Dispatchers.IO) {
                                 AppDatabase.getInstance(this@GameActivity).gameResultDao().insertGame(it)
                             }
                         }
@@ -191,14 +209,7 @@ class GameActivity : AppCompatActivity() {
 
     }
 
-    private fun adjustSpinnerSoundVolume() {
-        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
-        val volume = (maxVolume * 0.8).toInt()
-
-        mediaPlayer.setVolume(volume.toFloat() / maxVolume, volume.toFloat() / maxVolume)
-    }
-
-    private fun checkResult(symbol1: Int, symbol2: Int, symbol3: Int) : GameResult? {
+    private fun checkResult(symbol1: Int, symbol2: Int, symbol3: Int, callback: (GameResult?) -> Unit) {
         val screenshotLinearLayout = findViewById<LinearLayout>(R.id.screenshotLinearLayout)
         val symbol1Index = symbols.indexOf(symbol1)
         val symbol2Index = symbols.indexOf(symbol2)
@@ -225,14 +236,12 @@ class GameActivity : AppCompatActivity() {
             }
             mostrarNotificacionVictoria()
 
-        }
-        else if (symbol1Name == "s6" && symbol2Name == "s6" && symbol3Name == "s6") {
+        } else if (symbol1Name == "s6" && symbol2Name == "s6" && symbol3Name == "s6") {
             jugadorActual?.coins = jugadorActual?.coins?.minus(100)?.coerceAtLeast(0) ?: 0
             actualizarTextoResultado(1, "¡La muerte! Has perdido 100 monedas")
-            resultadoPremio = 100
+            resultadoPremio = -100
             screenshotLinearLayout.visibility = View.INVISIBLE
-        }
-        else if (symbol1Name == symbol2Name && symbol2Name == symbol3Name && symbol1Name != "s0" && symbol1Name != "s6") {
+        } else if (symbol1Name == symbol2Name && symbol2Name == symbol3Name && symbol1Name != "s0" && symbol1Name != "s6") {
             jugadorActual?.coins = jugadorActual?.coins?.plus(100) ?: 0
             actualizarTextoResultado(4, "¡Triple! Has ganado 100 monedas")
             resultadoPremio = 100
@@ -247,8 +256,7 @@ class GameActivity : AppCompatActivity() {
             }
             mostrarNotificacionVictoria()
 
-        }
-        else if ((symbol1Name == symbol2Name && symbol1Name != "s6" && symbol2Name != "s6") ||
+        } else if ((symbol1Name == symbol2Name && symbol1Name != "s6" && symbol2Name != "s6") ||
             (symbol2Name == symbol3Name && symbol2Name != "s6" && symbol3Name != "s6") ||
             (symbol1Name == symbol3Name && symbol1Name != "s6" && symbol3Name != "s6")) {
             jugadorActual?.coins = jugadorActual?.coins?.plus(20) ?: 0
@@ -265,8 +273,7 @@ class GameActivity : AppCompatActivity() {
             }
             mostrarNotificacionVictoria()
 
-        }
-        else {
+        } else {
             jugadorActual?.coins = jugadorActual?.coins?.minus(10)?.coerceAtLeast(0) ?: 0
             actualizarTextoResultado(2, "¡Inténtalo de nuevo!")
             resultadoPremio = -10
@@ -284,20 +291,52 @@ class GameActivity : AppCompatActivity() {
             }
         }
 
-        return jugadorActual?.id?.let { playerId ->
-            val calendar = Calendar.getInstance()
-            val currentDateTime = "${calendar.get(Calendar.DAY_OF_MONTH)}/${calendar.get(Calendar.MONTH) + 1}/${calendar.get(Calendar.YEAR)} " +
-                    "${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}:${calendar.get(Calendar.SECOND)}"
+        obtenerUbicacion { location ->
+            val gameResult = jugadorActual?.id?.let { playerId ->
+                val calendar = Calendar.getInstance()
+                val currentDateTime = "${calendar.get(Calendar.DAY_OF_MONTH)}/${calendar.get(Calendar.MONTH) + 1}/${calendar.get(Calendar.YEAR)} " +
+                        "${calendar.get(Calendar.HOUR_OF_DAY)}:${calendar.get(Calendar.MINUTE)}:${calendar.get(Calendar.SECOND)}"
 
-            GameResult( playerId = playerId,
-                        loot = resultadoPremio,
-                        result1 = symbol1Name,
-                        result2 = symbol2Name,
-                        result3 = symbol3Name,
-                        date = currentDateTime
-                      )
+                GameResult(
+                    playerId = playerId,
+                    loot = resultadoPremio,
+                    result1 = symbol1Name,
+                    result2 = symbol2Name,
+                    result3 = symbol3Name,
+                    date = currentDateTime,
+                    location = location
+                )
+            }
+
+            println("La localización del usuario es " + gameResult?.location)
+
+            callback(gameResult)
         }
     }
+
+    private fun adjustSpinnerSoundVolume() {
+        val maxVolume = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+        val volume = (maxVolume * 0.8).toInt()
+
+        mediaPlayer.setVolume(volume.toFloat() / maxVolume, volume.toFloat() / maxVolume)
+    }
+
+    private fun obtenerUbicacion(callback: (String) -> Unit) {
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            fusedLocationClient.lastLocation.addOnCompleteListener { task ->
+                if (task.isSuccessful && task.result != null) {
+                    val location = task.result
+                    callback("${location.latitude},${location.longitude}")
+                } else {
+                    callback("Location unavailable")
+                }
+            }
+        } else {
+            callback("Permission not granted")
+        }
+    }
+
+
 
     private fun navegarPantallaInicio() {
         val intent = Intent(this, MainActivity::class.java)
@@ -409,9 +448,9 @@ class GameActivity : AppCompatActivity() {
     private fun updateMusicButtonIcon(isPlaying: Boolean) {
         val musicButton: ImageButton = binding.buttonToggleMusic
         if (isPlaying) {
-            musicButton.setImageResource(com.example.producto2.R.drawable.ic_music_pause)
+            musicButton.setImageResource(R.drawable.ic_music_pause)
         } else {
-            musicButton.setImageResource(com.example.producto2.R.drawable.ic_music_play)
+            musicButton.setImageResource(R.drawable.ic_music_play)
         }
     }
 
@@ -484,7 +523,7 @@ class GameActivity : AppCompatActivity() {
             cursor.close()
 
             if (calendarId != null) {
-                val uniqueTitle = "$titulo - ${System.currentTimeMillis()}" // Título único usando la marca de tiempo
+                val uniqueTitle = "$titulo - ${System.currentTimeMillis()}"
 
                 val values = ContentValues().apply {
                     put(android.provider.CalendarContract.Events.DTSTART, System.currentTimeMillis())
@@ -528,6 +567,14 @@ class GameActivity : AppCompatActivity() {
                 Toast.makeText(this, "Permiso denegado para notificaciones", Toast.LENGTH_SHORT).show()
             }
         }
+
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Permiso concedido para localización", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(this, "Permiso denegado para localización", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun crearCanalNotificacion() {
@@ -557,7 +604,6 @@ class GameActivity : AppCompatActivity() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
 
-        // Mostrar la notificación
         notificationManager.notify(notificationId, builder.build())
     }
 

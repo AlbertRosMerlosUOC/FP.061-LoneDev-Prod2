@@ -77,6 +77,10 @@ class LeaderboardActivity : AppCompatActivity() {
         registerReceiver(musicReceiver, filter, RECEIVER_EXPORTED)
 
         checkMusicState()
+
+        binding.buttonHelp.setOnClickListener {
+            startActivity(Intent(this, HelpActivity::class.java))
+        }
     }
 
     private fun actualizarClasificacion() {

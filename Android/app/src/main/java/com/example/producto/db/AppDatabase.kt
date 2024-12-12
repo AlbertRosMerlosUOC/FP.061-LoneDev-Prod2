@@ -9,7 +9,7 @@ import com.example.producto2.dao.PlayerDao
 import com.example.producto2.model.GameResult
 import com.example.producto2.model.Player
 
-@Database(entities = [Player::class, GameResult::class], version = 1)
+@Database(entities = [Player::class, GameResult::class], version = 2)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun playerDao(): PlayerDao
     abstract fun gameResultDao(): GameResultDao
