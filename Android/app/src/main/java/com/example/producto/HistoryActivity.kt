@@ -128,7 +128,7 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     private fun restartActivityWithLocale(languageCode: String) {
-        saveLocale(this, languageCode)
+        saveSelectedLanguage(this, languageCode)
         val intent = Intent(this, MainActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
         finish()
@@ -136,19 +136,19 @@ class HistoryActivity : AppCompatActivity() {
     }
 
     override fun attachBaseContext(newBase: Context?) {
-        val savedLocale = getSavedLocale(newBase ?: return)
-        val contextWithLocale = newBase?.let { setAppLocale(it, savedLocale) } ?: newBase
+        val selectedLanguage = newBase?.let { getSelectedLanguage(it) } ?: Locale.getDefault().language
+        val contextWithLocale = newBase?.let { setAppLocale(it, selectedLanguage) }
         super.attachBaseContext(contextWithLocale)
     }
 
-    private fun getSavedLocale(context: Context): String {
+    private fun saveSelectedLanguage(context: Context, languageCode: String) {
         val prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        return prefs.getString("AppLocale", Locale.getDefault().language) ?: "en"
+        prefs.edit().putString("SelectedLanguage", languageCode).apply()
     }
 
-    private fun saveLocale(context: Context, languageCode: String) {
+    private fun getSelectedLanguage(context: Context): String {
         val prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        prefs.edit().putString("AppLocale", languageCode).apply()
+        return prefs.getString("SelectedLanguage", Locale.getDefault().language) ?: Locale.getDefault().language
     }
 
     private fun actualizarHistorial(historial: List<GameResult>) {

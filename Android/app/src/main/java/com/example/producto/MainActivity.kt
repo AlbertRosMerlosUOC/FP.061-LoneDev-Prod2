@@ -238,14 +238,6 @@ class MainActivity : AppCompatActivity() {
         startService(musicIntent)
     }
 
-    private fun selectMusicFromDevice() {
-        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
-            type = "audio/*"
-            addCategory(Intent.CATEGORY_OPENABLE)
-        }
-        startActivityForResult(intent, 200)
-    }
-
     private val selectMusicLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             val musicIntent = Intent(this, MusicService::class.java).apply {
