@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
+import android.content.res.Configuration
 import android.graphics.Bitmap
 import android.media.AudioManager
 import android.media.MediaPlayer
@@ -32,12 +33,14 @@ import kotlinx.coroutines.withContext
 import java.util.Calendar
 import kotlin.random.Random
 import android.os.Build
+import android.view.MenuItem
 import android.widget.ImageButton
+import android.widget.PopupMenu
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.app.NotificationCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
-import com.google.android.gms.tasks.OnCompleteListener
+import java.util.Locale
 
 class GameActivity : AppCompatActivity() {
 
@@ -73,6 +76,11 @@ class GameActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityGameBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val btnSelectLanguage: ImageButton = findViewById(com.example.producto2.R.id.buttonSelectLanguage)
+        btnSelectLanguage.setOnClickListener { view ->
+            showLanguagePopup(view)
+        }
 
         database = AppDatabase.getInstance(this)
 
@@ -122,7 +130,7 @@ class GameActivity : AppCompatActivity() {
             if (screenshot != null) {
                 saveImageToGallery(screenshot)
             } else {
-                showToast("No se pudo capturar la pantalla.")
+                showToast(getString(com.example.producto2.R.string.screenshot_error))
             }
         }
 
@@ -165,6 +173,53 @@ class GameActivity : AppCompatActivity() {
 
     }
 
+    private fun showLanguagePopup(view: View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(com.example.producto2.R.menu.language_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { menuItem: MenuItem ->
+            when (menuItem.itemId) {
+                com.example.producto2.R.id.language_english -> restartActivityWithLocale("en")
+                com.example.producto2.R.id.language_spanish -> restartActivityWithLocale("es")
+                com.example.producto2.R.id.language_catalan -> restartActivityWithLocale("ca")
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun setAppLocale(context: Context, languageCode: String): Context {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        return context.createConfigurationContext(config)
+    }
+
+    private fun restartActivityWithLocale(languageCode: String) {
+        saveLocale(this, languageCode)
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        finish()
+        startActivity(intent)
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        val savedLocale = getSavedLocale(newBase ?: return)
+        val contextWithLocale = newBase?.let { setAppLocale(it, savedLocale) } ?: newBase
+        super.attachBaseContext(contextWithLocale)
+    }
+
+    private fun getSavedLocale(context: Context): String {
+        val prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        return prefs.getString("AppLocale", Locale.getDefault().language) ?: "en"
+    }
+
+    private fun saveLocale(context: Context, languageCode: String) {
+        val prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        prefs.edit().putString("AppLocale", languageCode).apply()
+    }
+
     private fun spinReels() {
         val spinDuration = 2000L
         val delay = 50L
@@ -184,7 +239,6 @@ class GameActivity : AppCompatActivity() {
                 val symbol2 = symbols[Random.nextInt(symbols.size)]
                 val symbol3 = symbols[Random.nextInt(symbols.size)]
 
-                // Aplicamos una animación de deslizamiento a las imágenes de las fichas
                 animateReel(binding.reel1, symbol1)
                 animateReel(binding.reel2, symbol2)
                 animateReel(binding.reel3, symbol3)
@@ -223,14 +277,15 @@ class GameActivity : AppCompatActivity() {
 
         if (symbol1Name == "s0" && symbol2Name == "s0" && symbol3Name == "s0") {
             jugadorActual?.coins = jugadorActual?.coins?.plus(500) ?: 0
-            actualizarTextoResultado(5, "¡Jack-o-Win! Has ganado 500 monedas")
+            actualizarTextoResultado(5, getString(com.example.producto2.R.string.result_0))
             resultadoPremio = 500
             screenshotLinearLayout.visibility = View.VISIBLE
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 (checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(android.Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED)) {
 
-                registrarVictoriaEnCalendario("Victoria en el juego", "Has ganado una partida con un premio ¡Jack-o-Win!")
+                registrarVictoriaEnCalendario(getString(com.example.producto2.R.string.victory_title),
+                    getString(com.example.producto2.R.string.victory_0))
             } else {
                 solicitarPermisosCalendario()
             }
@@ -238,19 +293,20 @@ class GameActivity : AppCompatActivity() {
 
         } else if (symbol1Name == "s6" && symbol2Name == "s6" && symbol3Name == "s6") {
             jugadorActual?.coins = jugadorActual?.coins?.minus(100)?.coerceAtLeast(0) ?: 0
-            actualizarTextoResultado(1, "¡La muerte! Has perdido 100 monedas")
+            actualizarTextoResultado(1, getString(com.example.producto2.R.string.loss_death))
             resultadoPremio = -100
             screenshotLinearLayout.visibility = View.INVISIBLE
         } else if (symbol1Name == symbol2Name && symbol2Name == symbol3Name && symbol1Name != "s0" && symbol1Name != "s6") {
             jugadorActual?.coins = jugadorActual?.coins?.plus(100) ?: 0
-            actualizarTextoResultado(4, "¡Triple! Has ganado 100 monedas")
+            actualizarTextoResultado(4, getString(com.example.producto2.R.string.result_1))
             resultadoPremio = 100
             screenshotLinearLayout.visibility = View.VISIBLE
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 (checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(android.Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED)) {
 
-                registrarVictoriaEnCalendario("Victoria en el juego", "Has ganado una partida con un premio ¡Triple!")
+                registrarVictoriaEnCalendario(getString(com.example.producto2.R.string.victory_title),
+                    getString(com.example.producto2.R.string.victory_1))
             } else {
                 solicitarPermisosCalendario()
             }
@@ -260,14 +316,15 @@ class GameActivity : AppCompatActivity() {
             (symbol2Name == symbol3Name && symbol2Name != "s6" && symbol3Name != "s6") ||
             (symbol1Name == symbol3Name && symbol1Name != "s6" && symbol3Name != "s6")) {
             jugadorActual?.coins = jugadorActual?.coins?.plus(20) ?: 0
-            actualizarTextoResultado(3, "¡Doble! Has ganado 20 monedas")
+            actualizarTextoResultado(3, getString(com.example.producto2.R.string.result_2))
             resultadoPremio = 20
             screenshotLinearLayout.visibility = View.VISIBLE
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M &&
                 (checkSelfPermission(android.Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
                         checkSelfPermission(android.Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED)) {
 
-                registrarVictoriaEnCalendario("Victoria en el juego", "Has ganado una partida con un premio ¡Doble!")
+                registrarVictoriaEnCalendario(getString(com.example.producto2.R.string.victory_title),
+                    getString(com.example.producto2.R.string.victory_2))
             } else {
                 solicitarPermisosCalendario()
             }
@@ -275,7 +332,7 @@ class GameActivity : AppCompatActivity() {
 
         } else {
             jugadorActual?.coins = jugadorActual?.coins?.minus(10)?.coerceAtLeast(0) ?: 0
-            actualizarTextoResultado(2, "¡Inténtalo de nuevo!")
+            actualizarTextoResultado(2, getString(com.example.producto2.R.string.try_again))
             resultadoPremio = -10
             screenshotLinearLayout.visibility = View.INVISIBLE
         }
@@ -308,7 +365,7 @@ class GameActivity : AppCompatActivity() {
                 )
             }
 
-            println("La localización del usuario es " + gameResult?.location)
+            println(getString(com.example.producto2.R.string.user_location) + gameResult?.location)
 
             callback(gameResult)
         }
@@ -328,15 +385,13 @@ class GameActivity : AppCompatActivity() {
                     val location = task.result
                     callback("${location.latitude},${location.longitude}")
                 } else {
-                    callback("Location unavailable")
+                    callback(getString(com.example.producto2.R.string.location_unavailable))
                 }
             }
         } else {
-            callback("Permission not granted")
+            callback(getString(com.example.producto2.R.string.permission_not_granted))
         }
     }
-
-
 
     private fun navegarPantallaInicio() {
         val intent = Intent(this, MainActivity::class.java)
@@ -345,7 +400,7 @@ class GameActivity : AppCompatActivity() {
 
     private fun actualizarMonedas() {
         jugadorActual?.let {
-            binding.coinsTextView.text = "Monedas: ${it.coins}"
+            binding.coinsTextView.text = getString(R.string.coins_text, it.coins)
         }
     }
 
@@ -361,9 +416,9 @@ class GameActivity : AppCompatActivity() {
 
     private fun showDeletePlayerDialog() {
         val dialog = android.app.AlertDialog.Builder(this)
-            .setTitle("Game Over")
-            .setMessage("Tus monedas han llegado a 0. El jugador será eliminado.")
-            .setPositiveButton("Seguir") { dialog, _ ->
+            .setTitle(getString(com.example.producto2.R.string.game_over))
+            .setMessage(getString(com.example.producto2.R.string.game_over_text))
+            .setPositiveButton(getString(com.example.producto2.R.string.seguir)) { dialog, _ ->
                 lifecycleScope.launch {
                     withContext(Dispatchers.IO) {
                         jugadorActual?.let {
@@ -386,7 +441,6 @@ class GameActivity : AppCompatActivity() {
     private fun animateReel(reelView: ImageView, symbolResId: Int) {
         val slideAnimation = AnimationUtils.loadAnimation(this, R.anim.rotate_animation)
         reelView.startAnimation(slideAnimation)
-
         reelView.setImageResource(symbolResId)
     }
 
@@ -424,7 +478,7 @@ class GameActivity : AppCompatActivity() {
                     }
                 }
             }
-            showToast("Captura guardada en la galería.")
+            showToast(getString(com.example.producto2.R.string.screenshot_success))
         } catch (e: Exception) {
             showToast("Error al guardar la captura: ${e.message}")
         }
@@ -537,15 +591,19 @@ class GameActivity : AppCompatActivity() {
                 val uri = contentResolver.insert(calendarUri, values)
 
                 if (uri != null) {
-                    Toast.makeText(this, "Victoria registrada en el calendario", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(com.example.producto2.R.string.calendar_0),
+                        Toast.LENGTH_SHORT).show()
                 } else {
-                    Toast.makeText(this, "Error al registrar la victoria en el calendario", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(com.example.producto2.R.string.calendar_1),
+                        Toast.LENGTH_SHORT).show()
                 }
             } else {
-                Toast.makeText(this, "No se encontró un calendario con cuenta 'uoc.edu'", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.calendar_2),
+                    Toast.LENGTH_SHORT).show()
             }
         } else {
-            Toast.makeText(this, "Error al acceder a los calendarios", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(com.example.producto2.R.string.calendar_3),
+                Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -554,33 +612,33 @@ class GameActivity : AppCompatActivity() {
 
         if (requestCode == CALENDAR_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permisos concedidos para el calendario", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.permission_0), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Permisos denegados para el calendario", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.permission_1), Toast.LENGTH_SHORT).show()
             }
         }
 
         if (requestCode == NOTIFICATIONS_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permiso concedido para notificaciones", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.permission_2), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Permiso denegado para notificaciones", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.permission_3), Toast.LENGTH_SHORT).show()
             }
         }
 
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Toast.makeText(this, "Permiso concedido para localización", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.permission_4), Toast.LENGTH_SHORT).show()
             } else {
-                Toast.makeText(this, "Permiso denegado para localización", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.permission_5), Toast.LENGTH_SHORT).show()
             }
         }
     }
 
     private fun crearCanalNotificacion() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val nombre = "Victorias"
-            val descripcion = "Notificaciones de victorias en el juego"
+            val nombre = getString(com.example.producto2.R.string.victories)
+            val descripcion = getString(com.example.producto2.R.string.victories_text)
             val importancia = NotificationManager.IMPORTANCE_DEFAULT
             val canal = NotificationChannel("victoria_channel", nombre, importancia).apply {
                 description = descripcion
@@ -599,8 +657,8 @@ class GameActivity : AppCompatActivity() {
 
         val builder = NotificationCompat.Builder(this, "victoria_channel")
             .setSmallIcon(R.drawable.ic_trophy)
-            .setContentTitle("¡Victoria!")
-            .setContentText("¡Felicidades! Has ganado una partida.")
+            .setContentTitle(getString(com.example.producto2.R.string.victory))
+            .setContentText(getString(com.example.producto2.R.string.victory_text))
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
 

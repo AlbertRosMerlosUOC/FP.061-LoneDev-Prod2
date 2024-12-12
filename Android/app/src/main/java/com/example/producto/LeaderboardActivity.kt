@@ -1,10 +1,15 @@
 package com.example.producto2
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
+import android.content.res.Configuration
 import android.os.Bundle
+import android.view.MenuItem
+import android.view.View
 import android.widget.ImageButton
+import android.widget.PopupMenu
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -16,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.Locale
 
 class LeaderboardActivity : AppCompatActivity() {
 
@@ -29,6 +35,11 @@ class LeaderboardActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityLeaderboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        val btnSelectLanguage: ImageButton = findViewById(com.example.producto2.R.id.buttonSelectLanguage)
+        btnSelectLanguage.setOnClickListener { view ->
+            showLanguagePopup(view)
+        }
 
         database = AppDatabase.getInstance(this)
 
@@ -47,7 +58,8 @@ class LeaderboardActivity : AppCompatActivity() {
             if (jugadorActual != null) {
                 navegarPantallaJuego()
             } else {
-                Toast.makeText(this, "Selecciona un jugador primero", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(com.example.producto2.R.string.select_player),
+                    Toast.LENGTH_SHORT).show()
             }
         }
 
@@ -81,6 +93,53 @@ class LeaderboardActivity : AppCompatActivity() {
         binding.buttonHelp.setOnClickListener {
             startActivity(Intent(this, HelpActivity::class.java))
         }
+    }
+
+    private fun showLanguagePopup(view: View) {
+        val popup = PopupMenu(this, view)
+        popup.menuInflater.inflate(com.example.producto2.R.menu.language_menu, popup.menu)
+
+        popup.setOnMenuItemClickListener { menuItem: MenuItem ->
+            when (menuItem.itemId) {
+                com.example.producto2.R.id.language_english -> restartActivityWithLocale("en")
+                com.example.producto2.R.id.language_spanish -> restartActivityWithLocale("es")
+                com.example.producto2.R.id.language_catalan -> restartActivityWithLocale("ca")
+            }
+            true
+        }
+        popup.show()
+    }
+
+    private fun setAppLocale(context: Context, languageCode: String): Context {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        val config = Configuration(context.resources.configuration)
+        config.setLocale(locale)
+        return context.createConfigurationContext(config)
+    }
+
+    private fun restartActivityWithLocale(languageCode: String) {
+        saveLocale(this, languageCode)
+        val intent = Intent(this, MainActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+        finish()
+        startActivity(intent)
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        val savedLocale = getSavedLocale(newBase ?: return)
+        val contextWithLocale = newBase?.let { setAppLocale(it, savedLocale) } ?: newBase
+        super.attachBaseContext(contextWithLocale)
+    }
+
+    private fun getSavedLocale(context: Context): String {
+        val prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        return prefs.getString("AppLocale", Locale.getDefault().language) ?: "en"
+    }
+
+    private fun saveLocale(context: Context, languageCode: String) {
+        val prefs = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        prefs.edit().putString("AppLocale", languageCode).apply()
     }
 
     private fun actualizarClasificacion() {

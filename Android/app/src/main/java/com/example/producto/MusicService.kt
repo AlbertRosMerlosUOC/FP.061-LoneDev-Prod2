@@ -16,18 +16,16 @@ class MusicService : Service() {
 
     private var mediaPlayer: MediaPlayer? = null
     private var isPlaying = false
-    private var wasPlayingBeforeEvent = false // Para recordar si la música estaba en reproducción antes del evento
+    private var wasPlayingBeforeEvent = false
     private val phoneStateReceiver = object : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent) {
             val state = intent.getStringExtra(TelephonyManager.EXTRA_STATE)
             Log.d("MusicService", "Estado de la llamada: $state")
 
-            // Cuando hay una llamada entrante
             if (state == TelephonyManager.EXTRA_STATE_RINGING) {
                 Log.d("MusicService", "Llamada entrante detectada. Pausando música.")
                 pauseMusicForEvent()
             }
-            // Cuando la llamada se ha terminado o colgado
             else if (state == TelephonyManager.EXTRA_STATE_IDLE) {
                 Log.d("MusicService", "Llamada finalizada. Reanudando música.")
                 resumeMusicAfterEvent()
@@ -39,7 +37,6 @@ class MusicService : Service() {
         override fun onReceive(context: Context, intent: Intent) {
             val audioManager = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
 
-            // Detectar cambios en el estado de audio (por ejemplo, alarmas)
             if (audioManager.ringerMode == AudioManager.RINGER_MODE_SILENT) {
                 Log.d("MusicService", "Modo silencioso activado. Pausando música.")
                 pauseMusicForEvent()
@@ -52,16 +49,14 @@ class MusicService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        mediaPlayer = MediaPlayer.create(this, R.raw.music3) // Aquí puedes usar tu música de fondo
+        mediaPlayer = MediaPlayer.create(this, R.raw.music3)
         mediaPlayer?.isLooping = true
-        mediaPlayer?.start() // Iniciar la música automáticamente
-        isPlaying = true // Actualizar el estado de la música
+        mediaPlayer?.start()
+        isPlaying = true
 
-        // Registrar el receptor para el estado de la llamada
         val phoneFilter = IntentFilter(TelephonyManager.ACTION_PHONE_STATE_CHANGED)
         registerReceiver(phoneStateReceiver, phoneFilter)
 
-        // Registrar el receptor para el cambio de modo de audio
         val audioFilter = IntentFilter(AudioManager.ACTION_AUDIO_BECOMING_NOISY)
         registerReceiver(audioManagerReceiver, audioFilter)
     }
@@ -80,7 +75,6 @@ class MusicService : Service() {
 
     override fun onDestroy() {
         super.onDestroy()
-        // Desregistrar los receptores
         unregisterReceiver(phoneStateReceiver)
         unregisterReceiver(audioManagerReceiver)
 
@@ -101,13 +95,13 @@ class MusicService : Service() {
             mediaPlayer?.start()
             isPlaying = true
         }
-        sendMusicState() // Actualizar el estado de la música
+        sendMusicState()
     }
 
     private fun sendMusicState() {
         val intent = Intent("com.example.producto2.MUSIC_STATE")
         intent.putExtra("isPlaying", isPlaying)
-        sendBroadcast(intent) // Enviar un broadcast con el estado de la música
+        sendBroadcast(intent)
     }
 
     private fun changeMusic(uri: String) {
@@ -116,10 +110,9 @@ class MusicService : Service() {
         mediaPlayer?.isLooping = true
         mediaPlayer?.start()
         isPlaying = true
-        sendMusicState() // Actualizar el estado de la música
+        sendMusicState()
     }
 
-    // Pausar música cuando se recibe una llamada o cambia el estado de audio
     private fun pauseMusicForEvent() {
         if (isPlaying) {
             wasPlayingBeforeEvent = true
@@ -128,12 +121,11 @@ class MusicService : Service() {
         }
     }
 
-    // Reanudar música después de la llamada o cuando termina el evento
     private fun resumeMusicAfterEvent() {
         if (wasPlayingBeforeEvent) {
             mediaPlayer?.start()
             isPlaying = true
-            sendMusicState() // Actualizar el estado de la música
+            sendMusicState()
             wasPlayingBeforeEvent = false
         }
     }
