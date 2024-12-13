@@ -380,17 +380,18 @@ class GameActivity : AppCompatActivity() {
     }
 
     private fun obtenerUbicacion(callback: (String) -> Unit) {
-        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+        if (checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED) {
             fusedLocationClient.lastLocation.addOnCompleteListener { task ->
                 if (task.isSuccessful && task.result != null) {
                     val location = task.result
                     callback("${location.latitude},${location.longitude}")
                 } else {
-                    callback(getString(com.example.producto2.R.string.location_unavailable))
+                    callback(getString(R.string.location_unavailable))
                 }
             }
         } else {
-            callback(getString(com.example.producto2.R.string.permission_not_granted))
+            callback(getString(R.string.permission_not_granted))
         }
     }
 
