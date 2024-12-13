@@ -41,7 +41,7 @@
     <string name="result_1">¡Triple! Has ganado 100 monedas</string>
     <string name="result_2">¡Doble! Has ganado 20 monedas"</string>
     <string name="try_again">¡Inténtalo de nuevo!</string>
-    <string name="user_location">La localización del usuario es </string>
+    <string name="user_location">La localización del usuario es</string>
     <string name="location_unavailable">Localización no disponible</string>
     <string name="permission_not_granted">Sin permisos</string>
     <string name="coins_text">Monedas: %1$d</string>

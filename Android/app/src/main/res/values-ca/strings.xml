@@ -41,7 +41,7 @@
     <string name="result_1">Triple! Has guanyat 100 monedes</string>
     <string name="result_2">Doble! Has guanyat 20 monedes</string>
     <string name="try_again">Torna-ho a intentar!</string>
-    <string name="user_location">La localització de l\'usuari és </string>
+    <string name="user_location">La localització de l\'usuari és</string>
     <string name="location_unavailable">Localització no disponible</string>
     <string name="permission_not_granted">Sense permisos</string>
     <string name="coins_text">Monedes: %1$d</string>

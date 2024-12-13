@@ -365,7 +365,8 @@ class GameActivity : AppCompatActivity() {
                 )
             }
 
-            println(getString(com.example.producto2.R.string.user_location) + gameResult?.location)
+            println(getString(com.example.producto2.R.string.user_location) +
+                    " [" + gameResult?.location + "]")
 
             callback(gameResult)
         }
